@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+
+    canvas {
+      background-color: rgba(0,0,0,.3);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+
+  <script>
+    const canvas = document.querySelector('#canvas');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    context = canvas.getContext('2d');
+    let pattern1, pattern2;
+    let img1Loaded, img2Loaded;
+    let interval, gameover;
+
+    var img1 = new Image();
+    var img2 = new Image();
+    img1.src = 'hb_1.png';
+    img2.src = 'hb_2.png';
+
+    let envelopes = [];   
+
+    canvas.addEventListener('click', function(e) {
+      let pointX = e.offsetX;
+      let pointY = e.offsetY;
+      envelopes = envelopes.filter((envelope, index) => {
+        if (pointX > envelope.x && pointX < envelope.x + envelope.width && 
+          pointY > envelope.dy && pointY < envelope.dy + envelope.height) {
+          console.log('got me');
+          return false;
+        }
+
+        return true;
+      });
+    });
+
+    class Envelope {
+
+      constructor(x) {
+        this.x = x;
+        this.dy = getRandomDy();
+        this.width = 48;
+        this.height = 69;
+        this.pattern = getRandomPattern();
+      }
+
+      draw() {
+        context.save();
+        context.fillStyle = this.pattern;
+        this.dy += 3;
+        context.translate(this.x, this.dy);
+        if (this.dy >= canvas.height) {
+          envelopes.splice(envelopes.indexOf(this), 1);
+        }
+        context.fillRect(0, 0, this.width, this.height);
+        context.restore();
+      }
+
+    }
+
+    function getRandomPattern() {
+      return Math.random() > .5 ? pattern1 : pattern2;
+    }
+
+    function getRandomDy() {
+      return -100 - Math.random() * 100;
+    }
+
+    function generateEvelopes() {
+      let width = window.innerWidth;
+      let count = Math.floor(width / 100);
+      let column = width / count;
+     
+      for (let i = 0; i < count; i++) {
+        let x = Math.random() * (column - 48) + column * i;
+        envelopes.push(new Envelope(x));
+      }
+    }
+
+    function animate() {
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      envelopes.forEach(envelope => envelope.draw());
+      if (!gameover) {
+        requestAnimationFrame(animate);
+      }
+      
+    }
+
+    function startAnimate() {
+      if (img1Loaded && img2Loaded) {
+        generateEvelopes();
+        animate();
+
+        setTimeout(() => {
+          gameover = true;
+          // context.clearRect(0, 0, canvas.width, canvas.height);
+          // context.fillStyle = 'black';
+          // context.fillText('Game Over', 50, 100);
+        }, 10000);
+      }
+    }
+
+    img1.onload = () => {
+      pattern1 = context.createPattern(img1, 'repeat');
+      img1Loaded = true;
+      startAnimate();
+    }
+
+    img2.onload = () => {
+      pattern2 = context.createPattern(img2, 'repeat');
+      img2Loaded = true;
+      startAnimate();
+    }
+
+    interval = setInterval(() => {
+      if (!gameover) {
+        generateEvelopes();
+      } else {
+        clearInterval(interval);
+      }
+    }, 1500);
+    
+
+  </script>
+</body>
+</html>
